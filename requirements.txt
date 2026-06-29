@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+langgraph
+langchain
+langchain-core
+langchain-openai
+pydantic
+typing_extensions
+google-api-python-client
+google-auth
+google-auth-httplib2
+google-auth-oauthlib
+supabase
+python-dotenv
+httpx
+python-multipart
