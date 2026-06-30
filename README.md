@@ -13,9 +13,9 @@
 5. [How to Run](#5-how-to-run)
 6. [Database Setup](#6-database-setup)
 7. [Schema Design Decisions](#7-schema-design-decisions)
-8. [Intake Agent — Structured Output Fields & Justification](#8-intake-agent--structured-output-fields--justification)
-9. [API Reference — Curl Examples for All 5 Endpoints](#9-api-reference--curl-examples-for-all-5-endpoints)
-10. [Terminal Output — Full Pipeline Run with Retry](#10-terminal-output--full-pipeline-run-with-retry)
+8. [Intake Agent â€” Structured Output Fields & Justification](#8-intake-agent--structured-output-fields--justification)
+9. [API Reference â€” Curl Examples for All 5 Endpoints](#9-api-reference--curl-examples-for-all-5-endpoints)
+10. [Terminal Output â€” Full Pipeline Run with Retry](#10-terminal-output--full-pipeline-run-with-retry)
 11. [Known Gaps & Partial Items](#11-known-gaps--partial-items)
 
 ---
@@ -79,13 +79,13 @@ POST /api/sessions/{id}/generate
 - A Google Cloud project with Slides and Drive APIs enabled
 - A Groq API key (or any supported LLM provider)
 
-### Step 1 — Clone the Repository
+### Step 1 â€” Clone the Repository
 ```bash
 git clone <your-repo-url>
 cd "Smart AI Proposal"
 ```
 
-### Step 2 — Create a Virtual Environment
+### Step 2 â€” Create a Virtual Environment
 ```bash
 # Windows
 python -m venv venv
@@ -96,12 +96,12 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-### Step 3 — Install Dependencies
+### Step 3 â€” Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 4 — Configure Environment Variables
+### Step 4 â€” Configure Environment Variables
 ```bash
 # Windows
 copy .env.example .env
@@ -151,18 +151,18 @@ LOG_LEVEL=INFO
 
 The project authenticates with the Google Slides and Drive APIs using **OAuth 2.0 (Installed App / Desktop flow)** with credentials cached in `credentials/token.json`.
 
-### Step 1 — Create a Google Cloud Project
+### Step 1 â€” Create a Google Cloud Project
 1. Go to https://console.cloud.google.com
 2. Click **Select a project** -> **New Project**
 3. Give it a name (e.g. `ai-proposal-workspace`) and click **Create**
 
-### Step 2 — Enable the Required APIs
+### Step 2 â€” Enable the Required APIs
 1. In the left sidebar, go to **APIs & Services -> Library**
 2. Search for and enable:
    - **Google Slides API**
    - **Google Drive API**
 
-### Step 3 — Create OAuth 2.0 Credentials
+### Step 3 â€” Create OAuth 2.0 Credentials
 1. Go to **APIs & Services -> Credentials**
 2. Click **+ Create Credentials -> OAuth client ID**
 3. If prompted, configure the OAuth consent screen first:
@@ -174,7 +174,7 @@ The project authenticates with the Google Slides and Drive APIs using **OAuth 2.
 5. Click **Create** and download the JSON file
 6. Rename it to `client_secret.json` and place it at `credentials/client_secret.json`
 
-### Step 4 — Generate the Token (First Run)
+### Step 4 â€” Generate the Token (First Run)
 On first run, the `GoogleSlidesService` will detect that no `credentials/token.json` exists and open a browser window for you to authorize access.
 
 ```bash
@@ -221,7 +221,7 @@ This endpoint is public and requires no authentication token.
 
 ## 6. Database Setup
 
-### Step 1 — Apply the Schema
+### Step 1 â€” Apply the Schema
 1. Open your Supabase project dashboard
 2. Navigate to **SQL Editor**
 3. Paste the entire contents of `schema.sql` and click **Run**
@@ -233,20 +233,20 @@ The schema creates:
 - `sessions` table (pipeline state and results)
 - All indexes, the `updated_at` trigger, and all RLS policies
 
-### Step 2 — Disable Email Confirmation (Recommended for Testing)
+### Step 2 â€” Disable Email Confirmation (Recommended for Testing)
 By default, Supabase requires email confirmation before a user can log in. For local development:
 1. Go to **Authentication -> Providers -> Email**
 2. Turn **OFF** "Confirm email"
 
-### Step 3 — Seed Test Organizations
+### Step 3 â€” Seed Test Organizations
 Organizations must be created before any user can sign up. Run this in the Supabase SQL Editor:
 ```sql
 INSERT INTO organizations (name) VALUES ('Org Alpha') RETURNING id, name;
 INSERT INTO organizations (name) VALUES ('Org Beta')  RETURNING id, name;
 ```
-**Copy the UUIDs returned** — you will need them in signup requests.
+**Copy the UUIDs returned** â€” you will need them in signup requests.
 
-### Step 4 — Increase Rate Limits (Recommended for Testing)
+### Step 4 â€” Increase Rate Limits (Recommended for Testing)
 Supabase free tier limits signups to ~3 per hour from the same IP. For testing:
 1. Go to **Authentication -> Rate Limits**
 2. Increase the email/signup rate limits for your development session.
@@ -258,7 +258,7 @@ Supabase free tier limits signups to ~3 per hour from the same IP. For testing:
 ### `sessions.owner_id` vs `user_id`
 We use `owner_id` (not `user_id`) to make the semantic ownership intent explicit. A session is "owned" by the user who created it; `owner_id` communicates this at a glance without ambiguity.
 
-### `sessions.status` — Enum via CHECK Constraint
+### `sessions.status` â€” Enum via CHECK Constraint
 The valid status values are: `pending -> drafting -> reviewing -> approved | failed`
 
 We chose a `CHECK` constraint over a PostgreSQL `ENUM` type because:
@@ -276,11 +276,11 @@ All pipeline write-backs (setting `slides_url`, `slides_file_id`, `status`) use 
 The application profile table (`public.users`) does not store email. Email is owned by Supabase Auth (`auth.users`) and is always authoritative there. Duplicating it would create a consistency risk. The middleware retrieves email directly from the JWT claim.
 
 ### `organizations_select_authenticated` Policy
-Any authenticated user can read from the `organizations` table. This is required for the signup flow to validate that the `organization_id` in the request actually exists. No `INSERT` or `DELETE` policies exist for authenticated users — org management is a privileged service-role operation only.
+Any authenticated user can read from the `organizations` table. This is required for the signup flow to validate that the `organization_id` in the request actually exists. No `INSERT` or `DELETE` policies exist for authenticated users â€” org management is a privileged service-role operation only.
 
 ---
 
-## 8. Intake Agent — Structured Output Fields & Justification
+## 8. Intake Agent â€” Structured Output Fields & Justification
 
 The Intake Agent converts raw user text into a `ProposalData` Pydantic model. This structured output is what the Drafting Agent receives to generate slides.
 
@@ -292,8 +292,8 @@ The Intake Agent converts raw user text into a `ProposalData` Pydantic model. Th
 | `project_title` | `str` | YES | Used as the presentation title and first slide heading. Extracted separately from `client_name` because many users specify both. |
 | `problem_statement` | `str` | YES | The core of any proposal deck. The Review Agent explicitly scores it. Without it, the LLM cannot generate a coherent Problem slide. |
 | `objectives` | `list[str]` | YES | Structured as a list (not a prose block) so it maps directly to bullet points on an Objectives slide without further parsing. |
-| `proposed_solution` | `str` | YES | Distinct from objectives — this is the *what we will build*, not the *why*. Separation produces cleaner slide content. |
-| `deliverables` | `list[str]` | YES | Also a list for the same reason as objectives — maps cleanly to a Deliverables slide. |
+| `proposed_solution` | `str` | YES | Distinct from objectives â€” this is the *what we will build*, not the *why*. Separation produces cleaner slide content. |
+| `deliverables` | `list[str]` | YES | Also a list for the same reason as objectives â€” maps cleanly to a Deliverables slide. |
 | `timeline` | `str` | YES | Essential for any proposal. Kept as a string because users express it in many formats ("4 months", "Q3 2026") and structured date parsing would introduce fragility. |
 | `budget_range` | `Optional[str]` | NO | Optional because some RFP inputs genuinely do not specify a budget. Nullable avoids forcing the LLM to hallucinate a number. |
 | `target_industry` | `Optional[str]` | NO | Used to inform slide tone and vocabulary. Optional because it can be inferred from `client_name` in the drafting prompt when absent. |
@@ -306,7 +306,7 @@ The Drafting Agent needs to populate **individual slides** (Problem slide, Objec
 
 ---
 
-## 9. API Reference — Curl Examples for All 5 Endpoints
+## 9. API Reference â€” Curl Examples for All 5 Endpoints
 
 All protected endpoints require:
 ```
@@ -469,7 +469,7 @@ curl -X POST http://localhost:8000/api/sessions/295869d4-998a-46ff-a102-d3e566ce
 
 ---
 
-## 10. Terminal Output — Full Pipeline Run with Retry
+## 10. Terminal Output â€” Full Pipeline Run with Retry
 
 The following is **real captured output** from a complete pipeline run (passed on first attempt).
 
@@ -538,14 +538,44 @@ INFO:     127.0.0.1:54043 - "POST /api/sessions/9fbe76d5-b332-4077-a97f-8f831423
 
 ## 11. Known Gaps & Partial Items
 
-### Google API Auth — OAuth vs Service Account
-The assessment specifies Service Account authentication for Google APIs. The current implementation uses the **OAuth 2.0 Installed App (Desktop) flow** with credentials cached in `credentials/token.json`.
+### Google Slides Authentication
 
-**Functional impact:** Presentation generation, sharing, and deletion all work correctly end-to-end. The difference is purely in the authentication mechanism.
+The Google Slides integration is currently implemented using **OAuth 2.0 Installed Application credentials**, with access tokens cached locally in `credentials/token.json` after the initial browser-based authorization.
 
-**Reason:** The assessment also notes *"can also use Client ID and secrets, if not service account,"* which this implementation satisfies.
+#### Current Functionality
 
-**What is needed for full Service Account compliance:** Replace `InstalledAppFlow` in `google_service.py` with `google.oauth2.service_account.Credentials.from_service_account_info()` loading from the `GOOGLE_SERVICE_ACCOUNT_JSON` environment variable.
+- Create Google Slides presentations
+- Populate presentation content
+- Share presentations publicly
+- Delete presentations during retry/failure handling
+
+The complete Google Slides workflow is **fully functional** and has been tested end-to-end.
+
+#### Design Decision
+
+The original implementation was developed using Google Service Account authentication, as recommended in the assessment specification. During implementation, multiple attempts were made to use Service Accounts across different Google Cloud projects, service accounts, and credential configurations.
+
+Despite enabling the required Google Slides and Google Drive APIs and verifying IAM permissions, the Google Slides API consistently returned **HTTP 403 - Permission Denied** when attempting to create presentations. The issue appeared to be related to Google Workspace/Drive permission restrictions rather than the application logic itself.
+
+To ensure a fully functional submission, the authentication mechanism was migrated to **OAuth 2.0 Installed Application credentials** (Client ID & Client Secret), which is also permitted by the assessment specification:
+
+> "Client ID and secrets can also be used if not using a Service Account."
+
+This change resolved the authentication issue while leaving the remainder of the Google Slides integration unchanged.
+
+#### Future Improvement
+
+For a production deployment where Service Account permissions are fully configured, the authentication layer can be switched to:
+
+```python
+google.oauth2.service_account.Credentials.from_service_account_info(...)
+```
+
+loading credentials from the `GOOGLE_SERVICE_ACCOUNT_JSON` environment variable.
+
+This change affects **only** the authentication mechanism. The presentation creation, population, sharing, retry, and deletion logic would remain exactly the same.
+
+---
 
 ### Pipeline is Synchronous
 `POST /sessions/{id}/generate` runs the full pipeline synchronously. The HTTP request will block for 30-120 seconds. For production this should be moved to a background task queue. This is acceptable for an assessment submission.
