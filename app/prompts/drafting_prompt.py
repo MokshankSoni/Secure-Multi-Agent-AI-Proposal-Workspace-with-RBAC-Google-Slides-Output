@@ -25,16 +25,17 @@ def build_drafting_prompt(
     retry_block = ""
     if retry_count > 0 and failure_reason is not None:
         retry_block = f"""
-## Previous Attempt Failed
+## Retry Instruction — Attempt #{retry_count}
 
-The previous proposal did not meet quality standards.
+The previous proposal failed the quality review.
 
-Failure reason:
+Failure Reason:
 {failure_reason}
 
-Improve the proposal significantly.
-Do not recreate identical wording.
-Address every issue mentioned above before generating the new proposal.
+Your task is NOT to make superficial wording changes.
+You MUST meaningfully improve the proposal by addressing every issue listed above while preserving the original business requirements.
+The regenerated presentation should differ where necessary to improve the review score.
+Avoid repeating the same structure, wording, or weak sections from the previous attempt.
 """.strip()
 
     return f"""

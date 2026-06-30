@@ -53,6 +53,14 @@ def review_node(state: ProposalState) -> dict:
         logger.error("Review node failed to evaluate presentation: %s", exc)
         raise
 
+    # --- UNCOMMENT BELOW TO TEST RETRY LOGIC YOURSELF ---
+    # retry_count = state.get("retry_count", 0)
+    # if retry_count == 0:
+    #     logger.warning("FORCING REVIEW FAILURE ON FIRST ATTEMPT TO TEST RETRY LOGIC!")
+    #     review_result.passed = False
+    #     review_result.feedback = "FORCED FAILURE FOR TESTING: The problem statement is too brief and the slides lack sufficient detail."
+    # ----------------------------------------------------
+
     failure_reason: Optional[str] = review_result.feedback if not review_result.passed else None
 
     logger.info(
