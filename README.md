@@ -123,7 +123,7 @@ Copy `.env.example` to `.env` and populate every field before starting the serve
 | `SUPABASE_URL` | YES | Your Supabase project REST URL | Supabase Dashboard -> Project Settings -> API -> Project URL |
 | `SUPABASE_ANON_KEY` | YES | Supabase anonymous/public key. Used for Auth calls (sign-up, login). | Supabase Dashboard -> Project Settings -> API -> anon public |
 | `SUPABASE_SERVICE_ROLE_KEY` | YES | Supabase service role key. Bypasses RLS for server-side operations. Never expose to client. | Supabase Dashboard -> Project Settings -> API -> service_role |
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | YES | Full JSON content of your Google service account credentials key file, as a single-line string. See Section 4. | Google Cloud Console -> IAM -> Service Accounts |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | NOT USED | Not used in the current implementation. OAuth 2.0 credentials are used instead (see Section 4 and Section 11). Would be required if switching to Service Account auth in future. | Google Cloud Console -> IAM -> Service Accounts |
 | `LLM_API_KEY` | YES | API key for your LLM provider. The project uses Groq by default -- set GROQ_API_KEY or LLM_API_KEY. | console.groq.com |
 | `LLM_MODEL` | YES | The model identifier to use. | Groq: llama-3.3-70b-versatile recommended |
 | `LLM_PROVIDER` | NO | Optional label for the LLM provider. | e.g. groq |
@@ -135,7 +135,10 @@ SUPABASE_URL=https://xyzxyzxyz.supabase.co
 SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIs...
 
-GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"my-project",...}
+# GOOGLE_SERVICE_ACCOUNT_JSON is not used in the current implementation.
+# The project uses OAuth 2.0 credentials stored in credentials/token.json instead.
+# See Section 4 (Google Credentials Setup) and Section 11 (Known Gaps) for full details.
+# GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"my-project",...}
 
 GROQ_API_KEY=gsk_...
 LLM_MODEL=llama-3.3-70b-versatile
