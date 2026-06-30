@@ -175,3 +175,38 @@ If the `review_node` determines the generated presentation does not meet the min
 3. The counter is incremented, and the graph loops back to the **Drafting Agent**.
 4. The Drafting Agent receives a strengthened prompt that explicitly includes the `failure_reason` from the Review Agent, ensuring the LLM meaningfully improves the proposal rather than making superficial changes.
 5. A brand new Google Slide deck is created and the review process starts again.
+
+## Database Schema & Row Level Security (RLS)
+
+The multi-tenant backend uses Supabase PostgreSQL with strict Row Level Security to ensure cross-tenant data isolation at the database layer. The schema is defined in `schema.sql`.
+
+### Tables & Key Design Choices
+
+- **`organizations`**: Stores tenant information. The `name` column has a `UNIQUE` constraint to ensure no duplicate tenant names are created.
+- **`users`**: Maps directly to Supabase Auth (`auth.users`) via a cascading foreign key. This table acts as the application profile. 
+  - **Reasoning**: We do not duplicate emails or passwords here; we rely entirely on the Supabase Auth layer. The `role` column is restricted via a `CHECK` constraint to exactly two roles: `'admin'` and `'member'`, fulfilling the RBAC requirements safely at the schema level without relying on application logic.
+- **`sessions`**: Stores the AI generation pipeline state. 
+  - Contains the mandatory `slides_url` and `slides_file_id` columns to store the Google Slides assets securely.
+  - The `status` column uses a `CHECK` constraint (`'pending'`, `'drafting'`, `'reviewing'`, `'approved'`, `'failed'`) to enforce valid state transitions.
+  - An `updated_at` trigger automatically refreshes the timestamp on row updates.
+
+### Row Level Security (RLS) Policies
+
+RLS is enabled on all tables (`organizations`, `users`, `sessions`). The application layer operates via a restricted anonymous client with a Bearer JWT, meaning the database securely filters queries before they ever reach the API logic.
+
+We have implemented the following policies to meet the assessment requirements:
+
+1. **User Profile Isolation** (`users_select_own`):
+   - Users may only read their own profile row (`id = auth.uid()`).
+   - Profile creation (INSERT) is purposely missing a user-scoped policy. It is handled server-side at signup via the service role key, bypassing RLS to prevent unauthorized row creation before a user is fully authenticated.
+
+2. **Member Session Isolation** (`sessions_select_member`):
+   - Members can only read `sessions` rows where `owner_id = auth.uid()`.
+
+3. **Admin Cross-Org Isolation** (`sessions_select_admin`):
+   - Admins can read all sessions **only within their own organization**.
+   - This is strictly enforced via an `EXISTS` subquery that validates the caller's JWT `auth.uid()` against the `users` table, checking that their `role` is `'admin'` and their `organization_id` strictly matches the row's `organization_id`.
+   - **Requirement Met**: An admin from Org A physically cannot retrieve sessions from Org B, even with a valid JWT and a direct API call. The database will return 0 rows at the Postgres level.
+
+4. **Insertion & Update Guards** (`sessions_insert_own`, `sessions_update_own_org`):
+   - Explicit `WITH CHECK` clauses prevent authenticated users from forging `owner_id` or `organization_id` in their HTTP requests. They can only create or update sessions tied to their own authenticated identity and tenant.
