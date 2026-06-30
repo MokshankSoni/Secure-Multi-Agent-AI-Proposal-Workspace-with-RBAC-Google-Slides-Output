@@ -48,6 +48,7 @@ class SessionResponse(BaseModel):
     session_id: str = Field(..., description="UUID of the session.")
     title: str = Field(..., description="Title of the proposal session.")
     status: str = Field(..., description="Current status of the session.")
+    slides_url: str | None = Field(None, description="Shareable Google Slides URL, populated once generation succeeds.")
     created_at: datetime = Field(..., description="Timestamp when the session was created.")
 
 

@@ -92,7 +92,7 @@ def list_sessions(auth: dict) -> list[SessionResponse]:
 
     try:
         query = service_client.table("sessions").select(
-            "id, title, status, created_at, owner_id, organization_id"
+            "id, title, status, slides_url, created_at, owner_id, organization_id"
         )
 
         if auth["role"] == "member":
@@ -108,6 +108,7 @@ def list_sessions(auth: dict) -> list[SessionResponse]:
                 session_id=row["id"],
                 title=row["title"],
                 status=row["status"],
+                slides_url=row.get("slides_url"),
                 created_at=row["created_at"],
             )
             for row in result.data
