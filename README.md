@@ -132,3 +132,46 @@ SLIDE 3: Objectives
   "feedback": "The proposal presentation accurately reflects the original proposal data, covering all key points and objectives. The language is professional, and the formatting is consistent and clean. The ideas are expressed clearly and concisely, making it easy to understand for the intended client. Overall, the proposal is well-structured and effectively communicates the proposed solution and its benefits."
 }
 ```
+
+## LangGraph Pipeline Architecture
+
+The entire proposal generation system is orchestrated using a **LangGraph StateGraph** which acts as an autonomous state machine. 
+
+### Graph Topology
+```text
+START
+  │
+  ▼
+intake_node          ← Extracts structured ProposalData from raw user text
+  │
+  ▼
+drafting_node        ← 1. Generates list[SlideData] via LLM
+  │                  ← 2. Creates new Google Slides Presentation via Google Slides API
+  │                  ← 3. Populates slides & Shares URL publicly
+  ▼
+review_node          ← Scores the presentation against quality standards
+  │
+  ▼
+route_after_review()
+  │
+  ├── IF passed=True          → finalize_node → END (Returns URL to user)
+  │
+  ├── IF passed=False
+  │   AND retries remain      → retry_node
+  │                                 │
+  │                                 ├── 1. Deletes failed Google Slides presentation from Drive
+  │                                 ├── 2. Increments retry_count
+  │                                 │
+  │                                 └──► drafting_node  (Loops back with failure feedback)
+  │
+  └── IF passed=False 
+      AND retries exhausted   → fail_node → END (Deletes failed presentation and throws error)
+```
+
+### Self-Healing Retry Loop
+If the `review_node` determines the generated presentation does not meet the minimum threshold (e.g., missing budget details, poor tone, missing slides):
+1. The **Router** reads `passed=False` and diverts the execution to the `retry_node`.
+2. The **Retry Node** securely connects to Google Drive and **deletes** the failed presentation so that junk files do not accumulate.
+3. The counter is incremented, and the graph loops back to the **Drafting Agent**.
+4. The Drafting Agent receives a strengthened prompt that explicitly includes the `failure_reason` from the Review Agent, ensuring the LLM meaningfully improves the proposal rather than making superficial changes.
+5. A brand new Google Slide deck is created and the review process starts again.
