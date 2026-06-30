@@ -15,7 +15,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
-from app.database.supabase import get_anon_client
+from app.database.supabase import get_anon_client, get_service_client
 
 logger = logging.getLogger(__name__)
 
@@ -65,11 +65,36 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 content={"detail": "Invalid or expired token."},
             )
 
+        # Load the application profile to obtain organization_id and role.
+        # The service client bypasses RLS so this always succeeds for valid users.
+        try:
+            profile_res = get_service_client() \
+                .table("users") \
+                .select("organization_id, role") \
+                .eq("id", user.id) \
+                .single() \
+                .execute()
+        except Exception:
+            logger.warning(
+                "Authentication failed: no profile found for user_id=%s.", user.id
+            )
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "User profile not found. Account may be incomplete."},
+            )
+
         request.state.auth = {
             "user_id": user.id,
             "email": user.email,
+            "organization_id": profile_res.data["organization_id"],
+            "role": profile_res.data["role"],
         }
 
-        logger.info("Authentication successful for user_id=%s.", user.id)
+        logger.info(
+            "Authentication successful for user_id=%s role=%s org=%s.",
+            user.id,
+            profile_res.data["role"],
+            profile_res.data["organization_id"],
+        )
 
         return await call_next(request)
