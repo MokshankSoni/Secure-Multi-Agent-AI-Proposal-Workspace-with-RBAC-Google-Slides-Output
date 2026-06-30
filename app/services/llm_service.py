@@ -9,7 +9,7 @@ import os
 
 from typing import TypeVar, Type
 from pydantic import BaseModel
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_groq import ChatGroq
 
 logger = logging.getLogger(__name__)
 
@@ -34,32 +34,24 @@ class LLMService:
         Raises:
             EnvironmentError: If neither NVIDIA_API_KEY nor LLM_API_KEY are set, or if LLM_MODEL is not set.
         """
-        api_key = os.getenv("NVIDIA_API_KEY") or os.getenv("LLM_API_KEY")
+        api_key = os.getenv("GROQ_API_KEY") or os.getenv("LLM_API_KEY")
         model = os.getenv("LLM_MODEL")
-        provider = os.getenv("LLM_PROVIDER")
 
         if not api_key:
-            raise EnvironmentError("NVIDIA_API_KEY or LLM_API_KEY environment variable is not set.")
+            raise EnvironmentError("GROQ_API_KEY or LLM_API_KEY environment variable is not set.")
         if not model:
             raise EnvironmentError("LLM_MODEL environment variable is not set.")
 
         self._model_name = model
 
-        kwargs: dict = {
-            "model": model,
-            "api_key": api_key,
-            "temperature": 0.2,
-            "top_p": 0.7,
-            "max_tokens": 1024,
-            "timeout": 120,
-        }
+        self._chat_model = ChatGroq(
+            model=model,
+            api_key=api_key,
+            temperature=0.2,
+            max_tokens=4096,
+        )
 
-        if provider:
-            kwargs["base_url"] = provider
-
-        self._chat_model = ChatNVIDIA(**kwargs)
-
-        logger.info("LLMService initialized with NVIDIA model: %s", self._model_name)
+        logger.info("LLMService initialized with Groq model: %s", self._model_name)
 
     def generate_structured_output(
         self,

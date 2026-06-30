@@ -3,7 +3,7 @@ uvicorn
 langgraph
 langchain
 langchain-core
-langchain-openai
+langchain-groq
 pydantic
 typing_extensions
 google-api-python-client
